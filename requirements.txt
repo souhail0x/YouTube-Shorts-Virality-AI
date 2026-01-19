@@ -6,4 +6,5 @@ datasets
 scipy
 streamlit
 joblib
+plotly
 
