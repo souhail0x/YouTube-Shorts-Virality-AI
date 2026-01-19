@@ -5,19 +5,41 @@
 import streamlit as st
 import numpy as np
 import re
+import os
 import joblib
 from scipy.sparse import hstack
 from collections import Counter
 import plotly.express as px
 
 # ---------------------------
-# LOAD MODELS
+# MODEL FILES
 # ---------------------------
-model = joblib.load("model.pkl")
-tfidf = joblib.load("tfidf.pkl")
-scaler = joblib.load("scaler.pkl")
-keyword_stats = joblib.load("keyword_stats.pkl")
+MODEL_FILE = "model.pkl"
+TFIDF_FILE = "tfidf.pkl"
+SCALER_FILE = "scaler.pkl"
+KEYWORD_STATS_FILE = "keyword_stats.pkl"
 
+# ---------------------------
+# LOAD OR TRAIN MODEL
+# ---------------------------
+if all(os.path.exists(f) for f in [MODEL_FILE, TFIDF_FILE, SCALER_FILE, KEYWORD_STATS_FILE]):
+    model = joblib.load(MODEL_FILE)
+    tfidf = joblib.load(TFIDF_FILE)
+    scaler = joblib.load(SCALER_FILE)
+    keyword_stats = joblib.load(KEYWORD_STATS_FILE)
+else:
+    st.warning("⚠️ Training model… this may take a few seconds")
+    from train_model import train_model  # Assure-toi que train_model() retourne model, tfidf, scaler, keyword_stats
+    model, tfidf, scaler, keyword_stats = train_model()
+    joblib.dump(model, MODEL_FILE)
+    joblib.dump(tfidf, TFIDF_FILE)
+    joblib.dump(scaler, SCALER_FILE)
+    joblib.dump(keyword_stats, KEYWORD_STATS_FILE)
+    st.success("✅ Model trained!")
+
+# ---------------------------
+# SPACY SETUP
+# ---------------------------
 try:
     import spacy
     nlp = spacy.load("en_core_web_sm")
@@ -155,7 +177,6 @@ if st.button("🔮 Analyze & Predict"):
             st.write("No keywords detected yet.")
 
     with col2:
-        # Bar chart of top keyword scores
         if scored_phrases:
             kw, kw_scores = zip(*scored_phrases)
             fig = px.bar(
