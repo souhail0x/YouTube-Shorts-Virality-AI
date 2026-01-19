@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Score Pro - Analyse Intelligente de Contenu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .score-display {
+            transition: all 0.3s ease;
+        }
+        
+        .score-display:hover {
+            transform: scale(1.02);
+        }
+        
+        .factor-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        
+        .tooltip-content {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 250px;
+            max-width: 300px;
+        }
+        
+        .tooltip:hover .tooltip-content {
+            display: block;
+        }
+        
+        .radar-chart {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-3">
+                <i class="fas fa-chart-line text-blue-500 mr-3"></i>
+                Viral Score Pro
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Analyse intelligente du potentiel viral de votre contenu
+            </p>
+            <div class="inline-flex items-center bg-blue-50 text-blue-700 px-4 py-2 rounded-full mt-4">
+                <i class="fas fa-lightbulb mr-2"></i>
+                <span class="text-sm font-medium">Projet de soutenance - Système d'analyse prédictive</span>
+            </div>
+        </header>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-200">
+            <!-- Content Type Selector -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">
+                    <i class="fas fa-sliders-h mr-2 text-blue-500"></i>
+                    Sélectionnez votre type de contenu
+                </h2>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="analyzeContent('basketball')" 
+                            class="viral-btn px-5 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                        <i class="fas fa-basketball-ball mr-2"></i>Basketball
+                    </button>
+                    <button onclick="analyzeContent('gaming')" 
+                            class="viral-btn px-5 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                        <i class="fas fa-gamepad mr-2"></i>Gaming
+                    </button>
+                    <button onclick="analyzeContent('general')" 
+                            class="viral-btn px-5 py-3 rounded-lg font-medium transition-all duration-300 hover:scale-105 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                        <i class="fas fa-globe mr-2"></i>Contenu Général
+                    </button>
+                </div>
+            </div>
+
+            <!-- Score Display Area -->
+            <div id="scoreDisplay" class="text-center mb-10">
+                <div class="inline-block p-8 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-200">
+                    <div class="text-gray-500 mb-2">
+                        <i class="fas fa-bullseye mr-2"></i>
+                        Score de Viralité
+                    </div>
+                    <div class="score-display inline-flex items-center justify-center">
+                        <div class="text-7xl font-bold text-gray-800 mr-4" id="scoreValue">--</div>
+                        <div class="text-left">
+                            <div class="text-sm text-gray-500">sur 100</div>
+                            <div id="viralityLevel" class="font-semibold text-lg">--</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 tooltip relative inline-block cursor-help">
+                        <span id="scoreBadge" class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold">
+                            <i class="fas fa-info-circle mr-2"></i>Cliquez pour voir l'analyse
+                        </span>
+                        <div class="tooltip-content left-0 mt-2">
+                            <div class="font-medium text-gray-800 mb-2" id="scoreReason">Chargement...</div>
+                            <div class="text-sm text-gray-600" id="detailedReason">
+                                L'analyse est basée sur 6 facteurs clés pondérés selon leur importance.
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500">
+                                <i class="fas fa-microchip mr-1"></i>
+                                Modèle prédictif alimenté par IA
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Radar Chart -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-chart-radar mr-2 text-blue-500"></i>
+                        Analyse Multidimensionnelle
+                    </h3>
+                    <div id="radarChart" class="radar-chart"></div>
+                </div>
+
+                <!-- Timeline Chart -->
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <h3 class="font-semibold text-gray-700 mb-4">
+                        <i class="fas fa-chart-line mr-2 text-green-500"></i>
+                        Croissance sur 7 jours
+                    </h3>
+                    <div id="timelineChart"></div>
+                </div>
+            </div>
+
+            <!-- Factors Breakdown -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">
+                    <i class="fas fa-cogs mr-2 text-blue-500"></i>
+                    Détail des facteurs de viralité
+                </h3>
+                <div id="factorsBreakdown" class="space-y-4">
+                    <!-- Les facteurs seront injectés ici par JavaScript -->
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">
+                    <i class="fas fa-magic mr-2 text-blue-500"></i>
+                    Recommandations Intelligentes
+                </h3>
+                <div id="recommendations" class="space-y-3">
+                    <!-- Les recommandations seront injectées ici -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark Section -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-700 mb-6">
+                <i class="fas fa-trophy mr-2 text-amber-500"></i>
+                Comparaison avec les autres catégories
+            </h3>
+            <div id="benchmarkChart"></div>
+        </div>
+
+        <!-- Project Info Footer -->
+        <footer class="text-center text-gray-600 text-sm mt-12 pt-6 border-t border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="font-semibold text-gray-700 mb-2">Projet Académique - Système d'Analyse Prédictive</div>
+                    <p>Algorithmes de scoring avancés • Analyse multidimensionnelle • Visualisation de données en temps réel</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                        <i class="fas fa-code mr-1"></i> Flask Backend
+                    </div>
+                    <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                        <i class="fas fa-chart-bar mr-1"></i> Plotly.js
+                    </div>
+                    <div class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium">
+                        <i class="fas fa-brain mr-1"></i> IA Prédictive
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 text-gray-500">
+                <i class="far fa-copyright mr-1"></i> 2024 - Projet de Soutenance - Viral Score Pro
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let currentRadarGraph = null;
+        let currentTimelineGraph = null;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Analyser le contenu basketball par défaut
+            analyzeContent('basketball');
+            loadBenchmark();
+        });
+
+        async function analyzeContent(contentType) {
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.viral-btn').forEach(btn => {
+                btn.classList.remove('glow-effect', 'pulse-animation');
+            });
+            event.target.classList.add('glow-effect', 'pulse-animation');
+
+            // Afficher un état de chargement
+            document.getElementById('scoreValue').textContent = '...';
+            document.getElementById('scoreValue').classList.add('text-gray-400');
+            document.getElementById('viralityLevel').textContent = 'Analyse en cours';
+            document.getElementById('scoreBadge').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyse en cours';
+
+            try {
+                const response = await fetch(`/api/analyze/${contentType}`);
+                const data = await response.json();
+
+                // Mettre à jour le score principal
+                const scoreElement = document.getElementById('scoreValue');
+                scoreElement.textContent = data.viral_score;
+                scoreElement.classList.remove('text-gray-400');
+                scoreElement.className = `text-7xl font-bold mr-4 ${data.color_class}`;
+
+                // Mettre à jour les autres éléments
+                document.getElementById('viralityLevel').textContent = data.virality_level;
+                document.getElementById('scoreBadge').innerHTML = `<i class="fas fa-fire mr-2"></i>${data.badge}`;
+                document.getElementById('scoreReason').textContent = data.score_reason;
+                document.getElementById('detailedReason').innerHTML = 
+                    `Facteur principal: <strong>${data.primary_factor} (${data.primary_score}/100)</strong><br>
+                    Score calculé sur 6 métriques pondérées`;
+
+                // Afficher le graphique radar
+                displayRadarChart(JSON.parse(data.radar_graph));
+
+                // Afficher le graphique de timeline
+                displayTimelineChart(data.timeline_data);
+
+                // Afficher la breakdown des facteurs
+                displayFactorsBreakdown(data.breakdown);
+
+                // Afficher les recommandations
+                displayRecommendations(data.recommendations);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('scoreValue').textContent = 'Err';
+                document.getElementById('scoreValue').className = 'text-7xl font-bold mr-4 text-red-500';
+                document.getElementById('viralityLevel').textContent = 'Erreur d\'analyse';
+            }
+        }
+
+        function displayRadarChart(graphData) {
+            const graph = JSON.parse(graphData);
+            currentRadarGraph = Plotly.newPlot('radarChart', graph.data, graph.layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+
+        function displayTimelineChart(data) {
+            const trace1 = {
+                x: data.dates,
+                y: data.views,
+                name: 'Vues',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#3b82f6', width: 3 },
+                marker: { size: 8 }
+            };
+
+            const trace2 = {
+                x: data.dates,
+                y: data.engagement,
+                name: 'Engagement (%)',
+                type: 'scatter',
+                mode: 'lines+markers',
+                yaxis: 'y2',
+                line: { color: '#10b981', width: 2, dash: 'dash' },
+                marker: { size: 6 }
+            };
+
+            const layout = {
+                title: 'Évolution des performances',
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                xaxis: {
+                    title: 'Date',
+                    gridcolor: '#e5e7eb'
+                },
+                yaxis: {
+                    title: 'Nombre de vues',
+                    gridcolor: '#e5e7eb'
+                },
+                yaxis2: {
+                    title: 'Taux d\'engagement (%)',
+                    overlaying: 'y',
+                    side: 'right',
+                    gridcolor: '#e5e7eb'
+                },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2
+                },
+                height: 350,
+                margin: { l: 50, r: 50, t: 50, b: 50 }
+            };
+
+            currentTimelineGraph = Plotly.newPlot('timelineChart', [trace1, trace2], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+
+        function displayFactorsBreakdown(breakdown) {
+            const container = document.getElementById('factorsBreakdown');
+            container.innerHTML = '';
+
+            breakdown.forEach(factor => {
+                const factorElement = document.createElement('div');
+                factorElement.className = 'bg-gray-50 rounded-lg p-4 border border-gray-200';
+                factorElement.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="font-medium text-gray-700">
+                            ${factor.factor}
+                            <span class="text-xs text-gray-500 ml-2">(${factor.weight}%)</span>
+                        </div>
+                        <div class="font-bold ${factor.score >= 80 ? 'text-green-600' : factor.score >= 60 ? 'text-amber-600' : 'text-red-600'}">
+                            ${factor.score}/100
+                        </div>
+                    </div>
+                    <div class="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="factor-bar h-full rounded-full ${factor.score >= 80 ? 'bg-gradient-to-r from-green-400 to-green-500' : factor.score >= 60 ? 'bg-gradient-to-r from-amber-400 to-amber-500' : 'bg-gradient-to-r from-red-400 to-red-500'}" 
+                             style="width: ${factor.score}%"></div>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-2">
+                        <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+                        ${factor.analysis}
+                    </div>
+                `;
+                container.appendChild(factorElement);
+            });
+        }
+
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendations');
+            container.innerHTML = '';
+
+            recommendations.forEach((rec, index) => {
+                const recElement = document.createElement('div');
+                recElement.className = 'flex items-start';
+                recElement.innerHTML = `
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 mt-1">
+                        <i class="fas fa-lightbulb text-blue-500"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">Recommandation ${index + 1}</div>
+                        <div class="text-gray-600">${rec}</div>
+                    </div>
+                `;
+                container.appendChild(recElement);
+            });
+        }
+
+        async function loadBenchmark() {
+            try {
+                const response = await fetch('/api/benchmark');
+                const data = await response.json();
+
+                const trace = {
+                    x: data.categories,
+                    y: data.scores,
+                    type: 'bar',
+                    marker: {
+                        color: data.scores.map(score => 
+                            score >= 85 ? '#10b981' : 
+                            score >= 70 ? '#3b82f6' : 
+                            score >= 60 ? '#f59e0b' : '#ef4444'
+                        )
+                    }
+                };
+
+                const layout = {
+                    title: `Score moyen: ${data.average}/100`,
+                    xaxis: { title: 'Catégories' },
+                    yaxis: { title: 'Score de viralité', range: [0, 100] },
+                    height: 300,
+                    margin: { l: 50, r: 30, t: 50, b: 50 }
+                };
+
+                Plotly.newPlot('benchmarkChart', [trace], layout, {
+                    responsive: true,
+                    displayModeBar: false
+                });
+
+            } catch (error) {
+                console.error('Error loading benchmark:', error);
+            }
+        }
+    </script>
+</body>
+</html>
